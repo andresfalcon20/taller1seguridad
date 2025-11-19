@@ -1,3 +1,107 @@
-body { font-family: Arial, sans-serif; margin: 20px; }
-input, button { margin: 5px; padding: 8px; }
-pre { background: #f4f4f4; padding: 10px; }
+/* Reset y box-sizing para evitar scroll horizontal */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #f0f2f5; /* fondo general */
+    padding: 20px;
+}
+
+
+
+
+/* Contenedor de tarjetas */
+.contenedor-principal {
+    display: flex;
+    justify-content: center; /* centramos tarjetas */
+    align-items: flex-start;
+    gap: 20px; /* separación entre tarjetas */
+    flex-wrap: wrap; /* bajan en pantallas pequeñas */
+}
+
+/* Tarjetas */
+.tarjeta {
+    background: #ffffff; /* verde limón suave */
+    width: 45%; /* mismo tamaño */
+    max-height: 80vh; /* altura máxima para scroll interno */
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    overflow-y: auto; /* scroll vertical si contenido excede altura */
+    transition: transform 0.3s, box-shadow 0.3s, background 0.3s;
+}
+
+
+/* Inputs */
+.input {
+    display: block;
+    width: 100%;
+    margin: 10px 0; /* solo vertical */
+    padding: 10px 12px;
+    border: 1px solid #696969;
+    border-radius: 8px;
+    font-size: 1em;
+    transition: border 0.3s, box-shadow 0.3s;
+}
+
+.input:focus {
+    border-color: #729af1;
+    box-shadow: 0 0 5px rgba(76, 175, 80, 0.3);
+    outline: none;
+}
+
+/* Botones */
+.btn {
+    padding: 10px 20px;
+    font-size: 1em;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    margin: 10px 0; /* solo vertical */
+    transition: transform 0.2s, box-shadow 0.2s;
+    width: 100%;
+}
+
+.btn-primario {
+    background-color: #4eaace;
+    color: #fff;
+}
+
+.btn-primario:hover {
+    background-color: #6ec1e2;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
+}
+
+.btn-secundario {
+    background-color: #4eaace;
+    color: #fff;
+}
+
+.btn-secundario:hover {
+    background-color: #6ec1e2;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(129, 199, 132, 0.3);
+}
+
+/* Resultado y pre */
+.resultado, .pre {
+    background: #f4f4f4;
+    padding: 10px;
+    border-radius: 8px;
+    font-family: monospace;
+    margin-top: 5px;
+}
+
+/* Responsive: tarjetas bajan y se centran en móviles */
+@media (max-width: 900px) {
+    .tarjeta {
+        width: 90%;
+        max-height: 60vh;
+        margin-bottom: 20px;
+    }
+}

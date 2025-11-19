@@ -27,51 +27,58 @@ async function descifrarAES() {
 
 
 
-
-
 // --- RSA ---
 async function generarRSA() {
     const passphrase = document.getElementById('passphrase_rsa').value;
+    if (!passphrase) { alert("Escribe tu passphrase"); return; }
+
     const response = await fetch('/generar_rsa', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ passphrase })
     });
     const data = await response.json();
-    document.getElementById('claves_rsa').textContent = 'Clave Privada:\n' + data.private_key + '\n\nClave Pública:\n' + data.public_key;
-    // Almacena las claves para usar en cifrar/descifrar
+
+    document.getElementById('claves_rsa').textContent =
+        'Clave Privada:\n' + data.private_key + '\n\nClave Pública:\n' + data.public_key;
+
+    // Guardamos para cifrar/descifrar automáticamente
     window.privateKey = data.private_key;
     window.publicKey = data.public_key;
+
+    alert("Claves generadas correctamente. Ahora puedes cifrar un mensaje.");
 }
 
-async function cifrarRSA() {
+// Cifrar y mostrar automáticamente en el input
+async function cifrarYMostrar() {
     const mensaje = document.getElementById('mensaje_rsa').value;
-    if (!window.publicKey) {
-        alert('Genera las claves RSA primero.');
-        return;
-    }
+    if (!window.publicKey) { alert("Genera las claves primero"); return; }
+    if (!mensaje) { alert("Escribe un mensaje a cifrar"); return; }
+
     const response = await fetch('/cifrar_rsa', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ mensaje, public_key: window.publicKey })
     });
     const data = await response.json();
-    document.getElementById('resultado_rsa').textContent = 'Cifrado RSA: ' + data.cifrado;
+
     document.getElementById('cifrado_rsa_input').value = data.cifrado;
+    document.getElementById('resultado_desc_rsa').textContent = "";
 }
 
-async function descifrarRSA() {
+// Descifrar y mostrar el resultado
+async function descifrarYMostrar() {
     const cifrado = document.getElementById('cifrado_rsa_input').value;
     const passphrase = document.getElementById('passphrase_rsa').value;
-    if (!window.privateKey) {
-        alert('Genera las claves RSA primero.');
-        return;
-    }
+    if (!window.privateKey) { alert("Genera las claves primero"); return; }
+    if (!cifrado) { alert("No hay mensaje cifrado"); return; }
+
     const response = await fetch('/descifrar_rsa', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ cifrado, private_key: window.privateKey, passphrase })
     });
     const data = await response.json();
+
     document.getElementById('resultado_desc_rsa').textContent = data.descifrado || data.error;
 }
