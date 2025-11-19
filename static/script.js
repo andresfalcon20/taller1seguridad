@@ -24,6 +24,11 @@ async function descifrarAES() {
     document.getElementById('resultado_desc_aes').textContent = data.descifrado || data.error;
 }
 
+
+
+
+
+
 // --- RSA ---
 async function generarRSA() {
     const passphrase = document.getElementById('passphrase_rsa').value;
