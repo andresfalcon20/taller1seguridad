@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Auditoría de Seguridad - Sistemas de Cifrado</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <h1>Auditoría de Seguridad: Implementación de Sistemas de Cifrado</h1>
+    
+    <h2>1. Cifrado Simétrico (AES) - Protección de Información Confidencial</h2>
+    <input type="password" id="passphrase_aes" placeholder="Passphrase para derivar clave">
+    <input type="text" id="mensaje_aes" placeholder="Mensaje a cifrar">
+    <button onclick="cifrarAES()">Cifrar con AES</button>
+    <p id="resultado_aes"></p>
+    
+    <input type="text" id="cifrado_aes_input" placeholder="Mensaje cifrado">
+    <button onclick="descifrarAES()">Descifrar con AES</button>
+    <p id="resultado_desc_aes"></p>
+    
+    <h2>2. Cifrado Asimétrico (RSA) - Comunicación entre Departamentos</h2>
+    <input type="password" id="passphrase_rsa" placeholder="Passphrase para proteger clave privada">
+    <button onclick="generarRSA()">Generar Claves RSA</button>
+    <pre id="claves_rsa"></pre>
+    
+    <input type="text" id="mensaje_rsa" placeholder="Mensaje a cifrar con clave pública">
+    <button onclick="cifrarRSA()">Cifrar con RSA (Pública)</button>
+    <p id="resultado_rsa"></p>
+    
+    <input type="text" id="cifrado_rsa_input" placeholder="Mensaje cifrado">
+    <button onclick="descifrarRSA()">Descifrar con RSA (Privada)</button>
+    <p id="resultado_desc_rsa"></p>
+    
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
