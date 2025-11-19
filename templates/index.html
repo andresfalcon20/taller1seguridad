@@ -31,6 +31,34 @@
     <button onclick="descifrarRSA()">Descifrar con RSA (Privada)</button>
     <p id="resultado_desc_rsa"></p>
     
+    <h2>3. Subir / Descargar Archivos (AES y RSA Híbrido)</h2>
+    <h3>AES (passphrase)</h3>
+    <form id="form_aes" enctype="multipart/form-data" onsubmit="return false;">
+        <input type="file" id="file_aes" name="file"><br>
+        <input type="password" id="passphrase_file_aes" placeholder="Passphrase para AES"><br>
+        <button type="button" onclick="uploadCifrarAES()">Cifrar archivo (AES)</button>
+        <button type="button" onclick="uploadDescifrarAES()">Descifrar archivo (AES)</button>
+        <progress id="progress_file_aes" value="0" max="100" style="width:300px"></progress>
+        <p id="file_aes_status"></p>
+    </form>
+
+    <h3>RSA Híbrido (public/private PEM)</h3>
+    <form id="form_rsa" enctype="multipart/form-data" onsubmit="return false;">
+        <input type="file" id="file_rsa" name="file"><br>
+        <textarea id="public_key_input" placeholder="PEM clave pública (para cifrar)" rows="6" cols="60"></textarea><br>
+        <label>O subir archivo de clave pública:</label>
+        <input type="file" id="public_key_file" accept=".pem"><br>
+        <button type="button" onclick="uploadCifrarRSA()">Cifrar archivo (RSA híbrido)</button>
+        <br><br>
+        <textarea id="private_key_input" placeholder="PEM clave privada (para descifrar)" rows="6" cols="60"></textarea><br>
+        <label>O subir archivo de clave privada:</label>
+        <input type="file" id="private_key_file" accept=".pem"><br>
+        <input type="password" id="passphrase_private_rsa" placeholder="Passphrase de la clave privada"><br>
+        <progress id="progress_file_rsa" value="0" max="100" style="width:300px"></progress>
+        <button type="button" onclick="uploadDescifrarRSA()">Descifrar archivo (RSA híbrido)</button>
+        <p id="file_rsa_status"></p>
+    </form>
+
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>
