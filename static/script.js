@@ -28,57 +28,36 @@ async function descifrarAES() {
 
 
 // --- RSA ---
-async function generarRSA() {
+function generarRSA() {
     const passphrase = document.getElementById('passphrase_rsa').value;
     if (!passphrase) { alert("Escribe tu passphrase"); return; }
 
-    const response = await fetch('/generar_rsa', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ passphrase })
-    });
-    const data = await response.json();
+    // 1) Convertir passphrase en bytes
+    const md = forge.md.sha256.create();
+    md.update(passphrase);
+    const seed = md.digest().getBytes();
 
+    // 2) Crear PRNG determinístico
+    const prng = forge.random.createInstance();
+    prng.seedFileSync = () => seed;
+
+    // 3) Generar RSA determinístico
+    const keypair = forge.pki.rsa.generateKeyPair({
+        bits: 2048,
+        e: 0x10001,
+        prng: prng
+    });
+
+    const privatePem = forge.pki.privateKeyToPem(keypair.privateKey);
+    const publicPem = forge.pki.publicKeyToPem(keypair.publicKey);
+
+    // Mostrar en pantalla
     document.getElementById('claves_rsa').textContent =
-        'Clave Privada:\n' + data.private_key + '\n\nClave Pública:\n' + data.public_key;
+        "Clave Privada:\n" + privatePem + "\n\nClave Pública:\n" + publicPem;
 
-    // Guardamos para cifrar/descifrar automáticamente
-    window.privateKey = data.private_key;
-    window.publicKey = data.public_key;
+    // Guardar globalmente para cifrar/descifrar
+    window.privateKey = keypair.privateKey;
+    window.publicKey = keypair.publicKey;
 
-    alert("Claves generadas correctamente. Ahora puedes cifrar un mensaje.");
-}
-
-// Cifrar y mostrar automáticamente en el input
-async function cifrarYMostrar() {
-    const mensaje = document.getElementById('mensaje_rsa').value;
-    if (!window.publicKey) { alert("Genera las claves primero"); return; }
-    if (!mensaje) { alert("Escribe un mensaje a cifrar"); return; }
-
-    const response = await fetch('/cifrar_rsa', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mensaje, public_key: window.publicKey })
-    });
-    const data = await response.json();
-
-    document.getElementById('cifrado_rsa_input').value = data.cifrado;
-    document.getElementById('resultado_desc_rsa').textContent = "";
-}
-
-// Descifrar y mostrar el resultado
-async function descifrarYMostrar() {
-    const cifrado = document.getElementById('cifrado_rsa_input').value;
-    const passphrase = document.getElementById('passphrase_rsa').value;
-    if (!window.privateKey) { alert("Genera las claves primero"); return; }
-    if (!cifrado) { alert("No hay mensaje cifrado"); return; }
-
-    const response = await fetch('/descifrar_rsa', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cifrado, private_key: window.privateKey, passphrase })
-    });
-    const data = await response.json();
-
-    document.getElementById('resultado_desc_rsa').textContent = data.descifrado || data.error;
+    alert("Claves generadas correctamente.");
 }
