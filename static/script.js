@@ -1,18 +1,11 @@
-// Almacenamiento local para claves RSA generadas (solo para propósitos de prueba)
 const RSA_KEYS = {
     privateKey: localStorage.getItem('rsa_private_key_pem'),
     publicKey: localStorage.getItem('rsa_public_key_pem')
 };
 
-// Referencias a elementos comunes
 const keyStatusElement = document.getElementById('key_status');
 
-/**
- * Muestra un mensaje de estado en la interfaz.
- * @param {string} message - El mensaje a mostrar.
- * @param {string} type - El tipo de mensaje ('success', 'error', 'info').
- * @param {HTMLElement} element - El elemento donde mostrar el mensaje.
- */
+
 function displayStatus(message, type, element) {
     element.textContent = message;
     element.className = 'mt-2 text-sm text-center font-semibold';
@@ -25,9 +18,7 @@ function displayStatus(message, type, element) {
     }
 }
 
-/**
- * Actualiza el estado de las claves RSA en la interfaz.
- */
+
 function updateKeyStatus() {
     if (RSA_KEYS.privateKey && RSA_KEYS.publicKey) {
         displayStatus("Claves RSA cargadas correctamente.", 'success', keyStatusElement);
@@ -36,14 +27,31 @@ function updateKeyStatus() {
     }
 }
 
-// Inicializar el estado de las claves al cargar la página
 document.addEventListener('DOMContentLoaded', updateKeyStatus);
 
 
-/**
- * Genera un par de claves RSA llamando al backend de Flask.
- */
-async function generarRSA() {
+function downloadTextFile(content, filename) {
+    const blob = new Blob([content], { type: 'text/plain' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(a.href);
+}
+
+function readFileAsText(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsText(file);
+    });
+}
+
+
+async function generarRSADescargar() {
     const passphrase = document.getElementById('passphrase_rsa').value;
     if (!passphrase) {
         displayStatus("⚠️ Introduce una Passphrase para proteger tu clave privada.", 'error', keyStatusElement);
@@ -62,18 +70,15 @@ async function generarRSA() {
         const result = await response.json();
 
         if (response.ok) {
-            // Guardar claves en la variable local y localStorage
             RSA_KEYS.privateKey = result.private_key;
             RSA_KEYS.publicKey = result.public_key;
             localStorage.setItem('rsa_private_key_pem', result.private_key);
             localStorage.setItem('rsa_public_key_pem', result.public_key);
             
-            displayStatus("✅ Claves RSA generadas y guardadas en localStorage.", 'success', keyStatusElement);
-
-            // Opcional: Mostrar la clave pública para que el usuario la use
-            // console.log("Clave Pública:", result.public_key); 
-            // Podrías poner la clave pública en un textarea si fuera necesario compartirla inmediatamente.
-
+            downloadTextFile(result.private_key, 'private_key.pem');
+            downloadTextFile(result.public_key, 'public_key.pem');
+            
+            displayStatus("✅ Claves RSA generadas, guardadas y descargadas.", 'success', keyStatusElement);
         } else {
             displayStatus(`Error: ${result.error || 'Fallo al generar claves.'}`, 'error', keyStatusElement);
         }
@@ -83,72 +88,79 @@ async function generarRSA() {
 }
 
 
-/**
- * Cifra un mensaje usando la clave pública RSA.
- */
-async function cifrarRSA() {
-    const mensaje = document.getElementById('mensaje_rsa').value;
-    const resultado = document.getElementById('resultado_rsa');
+async function cifrarDatosRSA() {
+    const nombre = document.getElementById('nombre').value;
+    const correo = document.getElementById('correo').value;
+    const clave = document.getElementById('clave').value;
+    const frase = document.getElementById('frase').value;
+    const publicKeyFile = document.getElementById('public_key_file').files[0];
+    const resultado = document.getElementById('resultado_cifrar');
     
-    if (!RSA_KEYS.publicKey) {
-        resultado.value = "Error: Primero debes generar las claves RSA.";
+    if (!nombre || !correo || !clave || !frase) {
+        resultado.textContent = "Error: Completa todos los campos de datos.";
         return;
     }
-    if (!mensaje) {
-        resultado.value = "Error: Introduce un mensaje a cifrar.";
+    if (!publicKeyFile) {
+        resultado.textContent = "Error: Sube la clave pública.";
         return;
     }
 
-    resultado.value = "Cifrando...";
+    resultado.textContent = "Cifrando...";
 
     try {
-        const response = await fetch('/cifrar_rsa', {
+        const publicKeyPem = await readFileAsText(publicKeyFile);
+        const datos = JSON.stringify({ nombre, correo, clave, frase });
+
+        const response = await fetch('/cifrar_datos_rsa', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
-                mensaje: mensaje, 
-                public_key: RSA_KEYS.publicKey 
+                datos: datos, 
+                public_key: publicKeyPem 
             })
         });
 
         const result = await response.json();
 
         if (response.ok) {
-            resultado.value = result.cifrado;
+            resultado.textContent = result.cifrado;
         } else {
-            resultado.value = `Error de cifrado: ${result.error}`;
+            resultado.textContent = `Error de cifrado: ${result.error}`;
         }
     } catch (error) {
-        resultado.value = `Error de conexión: ${error.message}`;
+        resultado.textContent = `Error de conexión: ${error.message}`;
     }
 }
 
-/**
- * Descifra un mensaje usando la clave privada RSA.
- */
-async function descifrarRSA() {
-    const cifrado = document.getElementById('cifrado_rsa_input').value;
-    const passphrase = document.getElementById('passphrase_rsa').value;
-    const resultado = document.getElementById('resultado_desc_rsa');
 
-    if (!RSA_KEYS.privateKey) {
-        resultado.value = "Error: Primero debes generar las claves RSA.";
+async function descifrarDatosRSA() {
+    const cifrado = document.getElementById('cifrado_input').value;
+    const privateKeyPem = document.getElementById('private_key_text').value;
+    const passphrase = document.getElementById('passphrase_desc').value;
+    const resultado = document.getElementById('resultado_descifrar');
+
+    if (!cifrado) {
+        resultado.innerHTML = "Error: Pega los datos cifrados.";
         return;
     }
-    if (!cifrado || !passphrase) {
-        resultado.value = "Error: Asegúrate de introducir el mensaje cifrado y la Passphrase.";
+    if (!privateKeyPem) {
+        resultado.innerHTML = "Error: Pega la clave privada.";
+        return;
+    }
+    if (!passphrase) {
+        resultado.innerHTML = "Error: Introduce la passphrase.";
         return;
     }
 
-    resultado.value = "Descifrando...";
+    resultado.innerHTML = "Descifrando...";
 
     try {
-        const response = await fetch('/descifrar_rsa', {
+        const response = await fetch('/descifrar_datos_rsa', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
                 cifrado: cifrado, 
-                private_key: RSA_KEYS.privateKey,
+                private_key: privateKeyPem,
                 passphrase: passphrase
             })
         });
@@ -156,23 +168,22 @@ async function descifrarRSA() {
         const result = await response.json();
 
         if (response.ok) {
-            resultado.value = result.descifrado;
+            const datos = result.datos;
+            resultado.innerHTML = `
+                <p><strong>Nombre:</strong> ${datos.nombre}</p>
+                <p><strong>Correo:</strong> ${datos.correo}</p>
+                <p><strong>Clave:</strong> ${datos.clave}</p>
+                <p><strong>Frase:</strong> ${datos.frase}</p>
+            `;
         } else {
-            resultado.value = `Error de descifrado: ${result.error}`;
+            resultado.innerHTML = `Error de descifrado: ${result.error}`;
         }
     } catch (error) {
-        resultado.value = `Error de conexión: ${error.message}`;
+        resultado.innerHTML = `Error de conexión: ${error.message}`;
     }
 }
 
 
-// --- Funciones para Cifrado/Descifrado AES de Archivos ---
-
-/**
- * Maneja la descarga de un blob/archivo.
- * @param {Blob} blob - El contenido del archivo.
- * @param {string} filename - El nombre para el archivo descargado.
- */
 function downloadFile(blob, filename) {
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
@@ -184,9 +195,6 @@ function downloadFile(blob, filename) {
 }
 
 
-/**
- * Sube un archivo para cifrarlo con AES y desencadena la descarga del archivo cifrado.
- */
 async function uploadCifrarAES() {
     const fileInput = document.getElementById('file_aes');
     const passphrase = document.getElementById('passphrase_file_aes').value;
@@ -235,9 +243,7 @@ async function uploadCifrarAES() {
     }
 }
 
-/**
- * Sube un archivo cifrado para descifrarlo con AES y desencadena la descarga del archivo original.
- */
+
 async function uploadDescifrarAES() {
     const fileInput = document.getElementById('file_aes');
     const passphrase = document.getElementById('passphrase_file_aes').value;

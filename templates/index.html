@@ -10,28 +10,68 @@
 
     <div class="cards-container">
     
-        <div class="card2">
-            <h2>1. CIFRADO ASIMETRICO</h2>
+        <div class="card2 auto-height">
 
-            <label for="passphrase_rsa">🔐 Passphrase para proteger clave privada</label>
-            <input type="password" id="passphrase_rsa" placeholder="Passphrase para proteger clave privada">
+    <h2>1. CIFRADO ASIMETRICO</h2>
 
-            <button onclick="generarRSA()">Generar Claves RSA</button>
+    <div class="field-group">
+        <label for="nombre">Nombre</label>
+        <input type="text" id="nombre" placeholder="Ingresa tu nombre">
+    </div>
 
-            <label for="mensaje_rsa">📨 Mensaje a cifrar con clave pública</label>
-            <input type="text" id="mensaje_rsa" placeholder="Mensaje a cifrar con clave pública">
+    <div class="field-group">
+        <label for="correo">Correo</label>
+        <input type="email" id="correo" placeholder="Ingresa tu correo">
+    </div>
 
-            <button onclick="cifrarRSA()">Cifrar con RSA (Pública)</button>
-            <p id="resultado_rsa"></p>
+    <div class="field-group">
+        <label for="clave">Clave</label>
+        <input type="password" id="clave" placeholder="Ingresa tu clave">
+    </div>
 
-            <label for="cifrado_rsa_input">🔓 Mensaje cifrado</label>
-            <input type="text" id="cifrado_rsa_input" placeholder="Mensaje cifrado">
+    <div class="field-group">
+        <label for="frase">Frase</label>
+        <input type="text" id="frase" placeholder="Ingresa una frase">
+    </div>
 
-            <button onclick="descifrarRSA()">Descifrar con RSA (Privada)</button>
-            <p id="resultado_desc_rsa"></p>
-        </div>
+    <div class="field-group">
+        <label for="passphrase_rsa">🔐 Passphrase para proteger clave privada</label>
+        <input type="password" id="passphrase_rsa" placeholder="Passphrase para proteger clave privada">
+    </div>
 
-        <div class="card1">
+    <button onclick="generarRSADescargar()">Generar Claves RSA y Descargar</button>
+    <p id="key_status"></p>
+
+    <div class="field-group">
+        <label for="public_key_file">📁 Subir Clave Pública (.pem)</label>
+        <input type="file" id="public_key_file" accept=".pem">
+    </div>
+
+    <button onclick="cifrarDatosRSA()">Cifrar Datos con Clave Pública Subida</button>
+    <p id="resultado_cifrar"></p>
+
+    <div class="field-group">
+        <label for="private_key_text">🔑 Pega tu Clave Privada (PEM)</label>
+        <textarea id="private_key_text" placeholder="Pega aquí tu clave privada PEM"></textarea>
+    </div>
+
+    <div class="field-group">
+        <label for="passphrase_desc">🔐 Passphrase para clave privada</label>
+        <input type="password" id="passphrase_desc" placeholder="Passphrase">
+    </div>
+
+    <div class="field-group">
+        <label for="cifrado_input">🔓 Datos Cifrados</label>
+        <textarea id="cifrado_input" placeholder="Pega aquí los datos cifrados"></textarea>
+    </div>
+
+    <button onclick="descifrarDatosRSA()">Descifrar y Mostrar Datos</button>
+    <div id="resultado_descifrar"></div>
+
+</div>
+
+
+        <div class="card1 auto-height">
             <h2>2. SUBIR ARCHIVO Y CIFRAR (CIFRADO SIMETRICO)</h2>
 
             <form id="form_aes" enctype="multipart/form-data" onsubmit="return false;">

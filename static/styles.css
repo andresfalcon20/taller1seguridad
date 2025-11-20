@@ -1,125 +1,108 @@
-body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 20px;
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 20px;
+        background: url("https://images.steamusercontent.com/ugc/854976916434675605/0A7FF9FDC45305AB9F1B4F51DCAC315274B28F96/?imw=5000&imh=5000&ima=fit&impolicy=Letterbox&imcolor=%23000000&letterbox=false")
+                    no-repeat center center fixed;
+        background-size: contain;
+        background-color: #000;
+        color: white;
+    }
 
-    background: url("https://images.steamusercontent.com/ugc/854976916434675605/0A7FF9FDC45305AB9F1B4F51DCAC315274B28F96/?imw=5000&imh=5000&ima=fit&impolicy=Letterbox&imcolor=%23000000&letterbox=false")
-                no-repeat center center fixed;
+    .titulo {
+        text-align: center;
+        margin-bottom: 30px;
+        color: #ffffff;
+        text-shadow: 0 0 8px black;
+    }
 
-    background-size: contain;
-    background-color: #000;
-    color: white;
-}
+    .cards-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        gap: 25px;
+        align-items: start;
+    }
 
-.titulo {
-    text-align: center;
-    margin-bottom: 30px;
-    color: #ffffff;
-    text-shadow: 0 0 8px black;
-}
+    /* TARJETAS SIN SCROLL */
+    .card1, .card2 {
+        background: rgba(0, 0, 0, 0.75);
+        padding: 40px; 
+        border-radius: 12px;
+        box-shadow: 0 0 10px #444;
+        backdrop-filter: blur(3px);
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        /* ELIMINADO height fijo y scroll */
+    }
 
-/* CONTENEDOR DE TARJETAS */
-.cards-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-    gap: 25px;
-    align-items: start;
-}
+    /* Inputs más anchos */
+    input, button, textarea {
+        margin: 8px 0;
+        padding: 12px;
+        width: 95%;
+        max-width: 650px;
+        border-radius: 6px;
+        border: none;
+        outline: none;
+        margin-left: auto;
+        margin-right: auto;
+    }
 
-/* TARJETAS */
-.card1, .card2 {
-    background: rgba(0, 0, 0, 0.75);
-    padding: 40px; 
-    border-radius: 12px;
-    box-shadow: 0 0 10px #444;
-    backdrop-filter: blur(3px);
+    textarea {
+        min-height: 120px;
+        resize: vertical;
+    }
+
+    label {
+        display: block;
+        width: 95%;
+        max-width: 650px;
+        margin-left: auto;
+        margin-right: auto;
+        font-weight: bold;
+        color: #00eaff;
+        font-size: 15px;
+        margin-top: 10px;
+    }
+
+    button {
+        background: #00c9a7;
+        color: white;
+        cursor: pointer;
+        font-weight: bold;
+        padding: 12px 45px;
+        border-radius: 8px;
+        margin: 10px auto;
+        width: fit-content;
+        transition: background 0.3s ease, transform 0.2s ease;
+    }
+
+    button:hover {
+        background: #009e85;
+        transform: scale(1.05);
+    }
+
+    progress {
+        width: 95%;
+        max-width: 650px;
+        height: 20px;
+        margin: 10px auto;
+    }
+
+
+/* Contenedor compacto para agrupar label + input */
+.field-group {
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    height: 600px; 
-    overflow-y: auto;
+    gap: 4px; /* junta más el label con el input */
+    width: 95%;
+    max-width: 650px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
-h2, h3 {
-    color: #00eaff;
-}
-
-/* Inputs y botones */
-input, button, textarea {
-    margin: 8px 0;
-    padding: 10px;
-    width: 90%;
-    max-width: 500px;
-    border-radius: 6px;
-    border: none;
-    outline: none;
-    margin: 10px auto;
-}
-
-input, textarea {
-    background: rgba(255, 255, 255, 0.85);
-}
-
-button {
-    background: #00c9a7;
-    color: white;
-    cursor: pointer;
-    font-weight: bold;
-    padding: 10px 45px;
-    border: none;
-    border-radius: 8px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-    transition: background 0.3s ease, transform 0.2s ease;
-    display: block;
-    margin: 10px auto;
-    width: fit-content;
-}
-
-button:hover {
-    background: #009e85;
-    transform: scale(1.05);
-}
-
-/* Progreso */
-progress {
-    width: 90%;
-    height: 20px;
-    margin-top: 10px;
-}
-
-/* Pre en blanco */
-.pre-blanco {
-    background: rgba(255,255,255,0.1);
-    padding: 10px;
-    color: #fff;
-    border-radius: 5px;
-}
-
-label {
-    display: block;
-    font-weight: bold;
-    color: #00eaff;
-    margin: 12px auto 4px auto;
-    width: 90%;
-    max-width: 500px;
-    text-align: left;
-    font-size: 15px;
-    letter-spacing: 0.5px;
-}
-#form_aes {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    width: 100%;
-}
-
-#form_aes label,
-#form_aes input,
-#form_aes button,
-#form_aes progress,
-#form_aes p {
-    width: 90% !important;
-    max-width: 500px !important;
-    margin-left: auto !important;
-    margin-right: auto !important;
+/* Opcional: reducir el espacio superior de los labels dentro del grupo */
+.field-group label {
+    margin-top: 5px !important;
 }
