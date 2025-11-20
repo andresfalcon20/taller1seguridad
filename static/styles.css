@@ -23,43 +23,22 @@ body {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
     gap: 25px;
+    align-items: start;
 }
 
 /* TARJETAS */
-.card {
+.card1, .card2 {
     background: rgba(0, 0, 0, 0.75);
-    padding: 20px;
-    border-radius: 12px;
-    box-shadow: 0 0 10px #444;
-    backdrop-filter: blur(3px);
-}
-
-.card1 {
-    background: rgba(0, 0, 0, 0.75);
-    padding: 25px; 
+    padding: 40px; 
     border-radius: 12px;
     box-shadow: 0 0 10px #444;
     backdrop-filter: blur(3px);
     display: flex;
     flex-direction: column;
-    gap: 10px; /* espacio entre elementos internos */
-    height: 500px; /* límite visual opcional */
-    overflow-y: auto; /* scroll si se excede */
+    gap: 10px;
+    height: 600px; 
+    overflow-y: auto;
 }
-.card2 {
-    background: rgba(0, 0, 0, 0.75);
-    padding: 50px; 
-    border-radius: 12px;
-    box-shadow: 0 0 10px #444;
-    backdrop-filter: blur(3px);
-    display: flex;
-    flex-direction: column;
-    gap: 10px; /* espacio entre elementos internos */
-    height: 600px; /* límite visual opcional */
-    overflow-y: auto; /* scroll si se excede */
-}
-
-
 
 h2, h3 {
     color: #00eaff;
@@ -74,7 +53,7 @@ input, button, textarea {
     border-radius: 6px;
     border: none;
     outline: none;
-    margin: 10px auto; /* centrado horizontal */
+    margin: 10px auto;
 }
 
 input, textarea {
@@ -82,7 +61,7 @@ input, textarea {
 }
 
 button {
-    background: #00c9a7; /* verde menta tech */
+    background: #00c9a7;
     color: white;
     cursor: pointer;
     font-weight: bold;
@@ -92,13 +71,13 @@ button {
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
     transition: background 0.3s ease, transform 0.2s ease;
     display: block;
-    margin: 10px auto; /* centrado horizontal */
+    margin: 10px auto;
     width: fit-content;
 }
 
 button:hover {
-    background: #009e85; /* tono más oscuro al pasar el mouse */
-    transform: scale(1.05); /* efecto de agrandamiento sutil */
+    background: #009e85;
+    transform: scale(1.05);
 }
 
 /* Progreso */
@@ -114,4 +93,33 @@ progress {
     padding: 10px;
     color: #fff;
     border-radius: 5px;
+}
+
+label {
+    display: block;
+    font-weight: bold;
+    color: #00eaff;
+    margin: 12px auto 4px auto;
+    width: 90%;
+    max-width: 500px;
+    text-align: left;
+    font-size: 15px;
+    letter-spacing: 0.5px;
+}
+#form_aes {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
+
+#form_aes label,
+#form_aes input,
+#form_aes button,
+#form_aes progress,
+#form_aes p {
+    width: 90% !important;
+    max-width: 500px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
 }

@@ -1,198 +1,286 @@
-// --- AES ---
-async function cifrarAES() {
-    const passphrase = document.getElementById('passphrase_aes').value;
-    const mensaje = document.getElementById('mensaje_aes').value;
-    const response = await fetch('/cifrar_aes', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ passphrase, mensaje })
-    });
-    const data = await response.json();
-    document.getElementById('resultado_aes').textContent = 'Cifrado AES: ' + data.cifrado;
-    document.getElementById('cifrado_aes_input').value = data.cifrado;
+// Almacenamiento local para claves RSA generadas (solo para propósitos de prueba)
+const RSA_KEYS = {
+    privateKey: localStorage.getItem('rsa_private_key_pem'),
+    publicKey: localStorage.getItem('rsa_public_key_pem')
+};
+
+// Referencias a elementos comunes
+const keyStatusElement = document.getElementById('key_status');
+
+/**
+ * Muestra un mensaje de estado en la interfaz.
+ * @param {string} message - El mensaje a mostrar.
+ * @param {string} type - El tipo de mensaje ('success', 'error', 'info').
+ * @param {HTMLElement} element - El elemento donde mostrar el mensaje.
+ */
+function displayStatus(message, type, element) {
+    element.textContent = message;
+    element.className = 'mt-2 text-sm text-center font-semibold';
+    if (type === 'success') {
+        element.classList.add('text-green-600');
+    } else if (type === 'error') {
+        element.classList.add('text-red-600');
+    } else {
+        element.classList.add('text-gray-500');
+    }
 }
 
-async function descifrarAES() {
-    const passphrase = document.getElementById('passphrase_aes').value;
-    const cifrado = document.getElementById('cifrado_aes_input').value;
-    const response = await fetch('/descifrar_aes', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ passphrase, cifrado })
-    });
-    const data = await response.json();
-    document.getElementById('resultado_desc_aes').textContent = data.descifrado || data.error;
+/**
+ * Actualiza el estado de las claves RSA en la interfaz.
+ */
+function updateKeyStatus() {
+    if (RSA_KEYS.privateKey && RSA_KEYS.publicKey) {
+        displayStatus("Claves RSA cargadas correctamente.", 'success', keyStatusElement);
+    } else {
+        displayStatus("Estado: Claves no generadas. Por favor, genera un par.", 'info', keyStatusElement);
+    }
 }
 
-// --- RSA ---
+// Inicializar el estado de las claves al cargar la página
+document.addEventListener('DOMContentLoaded', updateKeyStatus);
+
+
+/**
+ * Genera un par de claves RSA llamando al backend de Flask.
+ */
 async function generarRSA() {
     const passphrase = document.getElementById('passphrase_rsa').value;
-    const response = await fetch('/generar_rsa', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ passphrase })
-    });
-    const data = await response.json();
-    document.getElementById('claves_rsa').textContent = 'Clave Privada:\n' + data.private_key + '\n\nClave Pública:\n' + data.public_key;
-    // Almacena las claves para usar en cifrar/descifrar
-    window.privateKey = data.private_key;
-    window.publicKey = data.public_key;
-}
-
-async function cifrarRSA() {
-    const mensaje = document.getElementById('mensaje_rsa').value;
-    if (!window.publicKey) {
-        alert('Genera las claves RSA primero.');
+    if (!passphrase) {
+        displayStatus("⚠️ Introduce una Passphrase para proteger tu clave privada.", 'error', keyStatusElement);
         return;
     }
-    const response = await fetch('/cifrar_rsa', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mensaje, public_key: window.publicKey })
-    });
-    const data = await response.json();
-    document.getElementById('resultado_rsa').textContent = 'Cifrado RSA: ' + data.cifrado;
-    document.getElementById('cifrado_rsa_input').value = data.cifrado;
+    
+    displayStatus("Generando claves... (Puede tardar unos segundos)", 'info', keyStatusElement);
+
+    try {
+        const response = await fetch('/generar_rsa', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ passphrase: passphrase })
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            // Guardar claves en la variable local y localStorage
+            RSA_KEYS.privateKey = result.private_key;
+            RSA_KEYS.publicKey = result.public_key;
+            localStorage.setItem('rsa_private_key_pem', result.private_key);
+            localStorage.setItem('rsa_public_key_pem', result.public_key);
+            
+            displayStatus("✅ Claves RSA generadas y guardadas en localStorage.", 'success', keyStatusElement);
+
+            // Opcional: Mostrar la clave pública para que el usuario la use
+            // console.log("Clave Pública:", result.public_key); 
+            // Podrías poner la clave pública en un textarea si fuera necesario compartirla inmediatamente.
+
+        } else {
+            displayStatus(`Error: ${result.error || 'Fallo al generar claves.'}`, 'error', keyStatusElement);
+        }
+    } catch (error) {
+        displayStatus(`Error de conexión: ${error.message}`, 'error', keyStatusElement);
+    }
 }
 
+
+/**
+ * Cifra un mensaje usando la clave pública RSA.
+ */
+async function cifrarRSA() {
+    const mensaje = document.getElementById('mensaje_rsa').value;
+    const resultado = document.getElementById('resultado_rsa');
+    
+    if (!RSA_KEYS.publicKey) {
+        resultado.value = "Error: Primero debes generar las claves RSA.";
+        return;
+    }
+    if (!mensaje) {
+        resultado.value = "Error: Introduce un mensaje a cifrar.";
+        return;
+    }
+
+    resultado.value = "Cifrando...";
+
+    try {
+        const response = await fetch('/cifrar_rsa', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                mensaje: mensaje, 
+                public_key: RSA_KEYS.publicKey 
+            })
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            resultado.value = result.cifrado;
+        } else {
+            resultado.value = `Error de cifrado: ${result.error}`;
+        }
+    } catch (error) {
+        resultado.value = `Error de conexión: ${error.message}`;
+    }
+}
+
+/**
+ * Descifra un mensaje usando la clave privada RSA.
+ */
 async function descifrarRSA() {
     const cifrado = document.getElementById('cifrado_rsa_input').value;
     const passphrase = document.getElementById('passphrase_rsa').value;
-    if (!window.privateKey) {
-        alert('Genera las claves RSA primero.');
+    const resultado = document.getElementById('resultado_desc_rsa');
+
+    if (!RSA_KEYS.privateKey) {
+        resultado.value = "Error: Primero debes generar las claves RSA.";
         return;
     }
-    const response = await fetch('/descifrar_rsa', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cifrado, private_key: window.privateKey, passphrase })
-    });
-    const data = await response.json();
-    document.getElementById('resultado_desc_rsa').textContent = data.descifrado || data.error;
+    if (!cifrado || !passphrase) {
+        resultado.value = "Error: Asegúrate de introducir el mensaje cifrado y la Passphrase.";
+        return;
+    }
+
+    resultado.value = "Descifrando...";
+
+    try {
+        const response = await fetch('/descifrar_rsa', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                cifrado: cifrado, 
+                private_key: RSA_KEYS.privateKey,
+                passphrase: passphrase
+            })
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            resultado.value = result.descifrado;
+        } else {
+            resultado.value = `Error de descifrado: ${result.error}`;
+        }
+    } catch (error) {
+        resultado.value = `Error de conexión: ${error.message}`;
+    }
 }
 
-// Helper para descargar blobs
-function downloadBlob(blob, filename) {
-    const url = URL.createObjectURL(blob);
+
+// --- Funciones para Cifrado/Descifrado AES de Archivos ---
+
+/**
+ * Maneja la descarga de un blob/archivo.
+ * @param {Blob} blob - El contenido del archivo.
+ * @param {string} filename - El nombre para el archivo descargado.
+ */
+function downloadFile(blob, filename) {
     const a = document.createElement('a');
-    a.href = url;
+    a.href = URL.createObjectURL(blob);
     a.download = filename;
     document.body.appendChild(a);
     a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+    URL.revokeObjectURL(a.href);
 }
 
-// --- Upload / File AES ---
+
+/**
+ * Sube un archivo para cifrarlo con AES y desencadena la descarga del archivo cifrado.
+ */
 async function uploadCifrarAES() {
-    const input = document.getElementById('file_aes');
-    if (!input.files.length) { alert('Selecciona un archivo.'); return; }
-    const file = input.files[0];
-    const passphrase = document.getElementById('passphrase_file_aes').value || '';
-    const fd = new FormData();
-    fd.append('file', file);
-    fd.append('passphrase', passphrase);
-    sendFormDataWithProgress('/upload_cifrar_aes', fd, 'progress_file_aes', (blob) => {
-        downloadBlob(blob, file.name + '.enc');
-        document.getElementById('file_aes_status').textContent = 'Archivo cifrado descargado.';
-    });
-}
+    const fileInput = document.getElementById('file_aes');
+    const passphrase = document.getElementById('passphrase_file_aes').value;
+    const statusElement = document.getElementById('file_aes_status');
+    const progressBar = document.getElementById('progress_file_aes');
 
-async function uploadDescifrarAES() {
-    const input = document.getElementById('file_aes');
-    if (!input.files.length) { alert('Selecciona un archivo cifrado (.enc).'); return; }
-    const file = input.files[0];
-    const passphrase = document.getElementById('passphrase_file_aes').value || '';
-    const fd = new FormData();
-    fd.append('file', file);
-    fd.append('passphrase', passphrase);
-    sendFormDataWithProgress('/upload_descifrar_aes', fd, 'progress_file_aes', (blob) => {
-        let filename = file.name;
-        if (filename.endsWith('.enc')) filename = filename.slice(0, -4);
-        downloadBlob(blob, filename);
-        document.getElementById('file_aes_status').textContent = 'Archivo descifrado descargado.';
-    });
-}
+    if (fileInput.files.length === 0 || !passphrase) {
+        displayStatus("⚠️ Selecciona un archivo y proporciona una Passphrase.", 'error', statusElement);
+        return;
+    }
 
-// --- Upload / File RSA Híbrido ---
-async function uploadCifrarRSA() {
-    const input = document.getElementById('file_rsa');
-    if (!input.files.length) { alert('Selecciona un archivo.'); return; }
-    const file = input.files[0];
-    const pub = document.getElementById('public_key_input').value || '';
-    const pubFileInput = document.getElementById('public_key_file');
-    if (!pub.trim() && (!pubFileInput || !pubFileInput.files.length)) { alert('Pega la clave pública PEM o sube el archivo.'); return; }
-    const fd = new FormData();
-    fd.append('file', file);
-    if (pub.trim()) fd.append('public_key', pub);
-    else fd.append('public_key_file', pubFileInput.files[0]);
-    sendFormDataWithProgress('/upload_cifrar_rsa', fd, 'progress_file_rsa', (blob) => {
-        downloadBlob(blob, file.name + '.enc');
-        document.getElementById('file_rsa_status').textContent = 'Archivo cifrado (RSA híbrido) descargado.';
-    });
-}
+    const formData = new FormData();
+    formData.append('file', fileInput.files[0]);
+    formData.append('passphrase', passphrase);
 
-async function uploadDescifrarRSA() {
-    const input = document.getElementById('file_rsa');
-    if (!input.files.length) { alert('Selecciona un archivo cifrado (.enc).'); return; }
-    const file = input.files[0];
-    const priv = document.getElementById('private_key_input').value || '';
-    const privFileInput = document.getElementById('private_key_file');
-    const pass = document.getElementById('passphrase_private_rsa').value || '';
-    if (!priv.trim() && (!privFileInput || !privFileInput.files.length)) { alert('Pega la clave privada PEM o sube el archivo.'); return; }
-    const fd = new FormData();
-    fd.append('file', file);
-    if (priv.trim()) fd.append('private_key', priv);
-    else fd.append('private_key_file', privFileInput.files[0]);
-    fd.append('passphrase', pass);
-    sendFormDataWithProgress('/upload_descifrar_rsa', fd, 'progress_file_rsa', (blob) => {
-        let filename = file.name;
-        if (filename.endsWith('.enc')) filename = filename.slice(0, -4);
-        downloadBlob(blob, filename);
-        document.getElementById('file_rsa_status').textContent = 'Archivo descifrado descargado.';
-    });
-}
+    displayStatus("Cifrando archivo... Espere.", 'info', statusElement);
+    progressBar.value = 50;
 
-// Envía FormData con XMLHttpRequest y actualiza progress element id; llama onSuccess(blob) al terminar
-function sendFormDataWithProgress(url, formData, progressElementId, onSuccess) {
-    const progressEl = document.getElementById(progressElementId);
-    progressEl.value = 0;
-    const xhr = new XMLHttpRequest();
-    xhr.open('POST', url);
-    xhr.responseType = 'blob';
-    xhr.upload.onprogress = function(e) {
-        if (e.lengthComputable) {
-            const percent = Math.round((e.loaded / e.total) * 100);
-            progressEl.value = percent;
-        }
-    };
-    xhr.onprogress = function(e) {
-        if (e.lengthComputable) {
-            const percent = Math.round((e.loaded / e.total) * 100);
-            progressEl.value = percent;
-        }
-    };
-    xhr.onload = function() {
-        if (xhr.status === 200) {
-            progressEl.value = 100;
-            onSuccess(xhr.response);
-        } else {
-            try {
-                const reader = new FileReader();
-                reader.onload = function() {
-                    try {
-                        const j = JSON.parse(reader.result);
-                        alert(j.error || 'Error: ' + xhr.status);
-                    } catch(e) {
-                        alert('Error: ' + xhr.status + ' ' + xhr.statusText);
-                    }
-                };
-                reader.readAsText(xhr.response);
-            } catch(e) {
-                alert('Error en la petición: ' + xhr.statusText);
+    try {
+        const response = await fetch('/upload_cifrar_aes', {
+            method: 'POST',
+            body: formData
+        });
+
+        progressBar.value = 100;
+        
+        if (response.ok) {
+            const blob = await response.blob();
+            // Intentar obtener el nombre del archivo del encabezado Content-Disposition si está disponible
+            const contentDisposition = response.headers.get('Content-Disposition');
+            let filename = fileInput.files[0].name + '.enc'; 
+            if (contentDisposition && contentDisposition.indexOf('filename=') !== -1) {
+                filename = contentDisposition.split('filename=')[1].replace(/"/g, '');
             }
+
+            downloadFile(blob, filename);
+            displayStatus(`✅ Archivo cifrado y descargado como: ${filename}`, 'success', statusElement);
+        } else {
+            const errorText = await response.json().then(data => data.error).catch(() => 'Error de servidor desconocido.');
+            displayStatus(`Error de cifrado: ${errorText}`, 'error', statusElement);
         }
-    };
-    xhr.onerror = function() { alert('Error de red durante la transferencia.'); };
-    xhr.send(formData);
+    } catch (error) {
+        displayStatus(`Error de conexión: ${error.message}`, 'error', statusElement);
+    } finally {
+        progressBar.value = 0;
+    }
+}
+
+/**
+ * Sube un archivo cifrado para descifrarlo con AES y desencadena la descarga del archivo original.
+ */
+async function uploadDescifrarAES() {
+    const fileInput = document.getElementById('file_aes');
+    const passphrase = document.getElementById('passphrase_file_aes').value;
+    const statusElement = document.getElementById('file_aes_status');
+    const progressBar = document.getElementById('progress_file_aes');
+
+    if (fileInput.files.length === 0 || !passphrase) {
+        displayStatus("⚠️ Selecciona el archivo cifrado y proporciona la Passphrase correcta.", 'error', statusElement);
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', fileInput.files[0]);
+    formData.append('passphrase', passphrase);
+
+    displayStatus("Descifrando archivo... Espere.", 'info', statusElement);
+    progressBar.value = 50;
+
+    try {
+        const response = await fetch('/upload_descifrar_aes', {
+            method: 'POST',
+            body: formData
+        });
+        
+        progressBar.value = 100;
+
+        if (response.ok) {
+            const blob = await response.blob();
+            const contentDisposition = response.headers.get('Content-Disposition');
+            let filename = fileInput.files[0].name.replace('.enc', '');
+            if (contentDisposition && contentDisposition.indexOf('filename=') !== -1) {
+                filename = contentDisposition.split('filename=')[1].replace(/"/g, '');
+            }
+
+            downloadFile(blob, filename);
+            displayStatus(`✅ Archivo descifrado y descargado como: ${filename}`, 'success', statusElement);
+        } else {
+            const errorText = await response.json().then(data => data.error).catch(() => 'Error de servidor desconocido.');
+            displayStatus(`Error de descifrado: ${errorText}.`, 'error', statusElement);
+        }
+    } catch (error) {
+        displayStatus(`Error de conexión: ${error.message}`, 'error', statusElement);
+    } finally {
+        progressBar.value = 0;
+    }
 }
