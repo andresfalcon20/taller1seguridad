@@ -6,58 +6,72 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
-    <h1>Auditoría de Seguridad: Implementación de Sistemas de Cifrado</h1>
-    
-    <h2>1. Cifrado Simétrico (AES) - Protección de Información Confidencial</h2>
-    <input type="password" id="passphrase_aes" placeholder="Passphrase para derivar clave">
-    <input type="text" id="mensaje_aes" placeholder="Mensaje a cifrar">
-    <button onclick="cifrarAES()">Cifrar con AES</button>
-    <p id="resultado_aes"></p>
-    
-    <input type="text" id="cifrado_aes_input" placeholder="Mensaje cifrado">
-    <button onclick="descifrarAES()">Descifrar con AES</button>
-    <p id="resultado_desc_aes"></p>
-    
-    <h2>2. Cifrado Asimétrico (RSA) - Comunicación entre Departamentos</h2>
-    <input type="password" id="passphrase_rsa" placeholder="Passphrase para proteger clave privada">
-    <button onclick="generarRSA()">Generar Claves RSA</button>
-    <pre id="claves_rsa"></pre>
-    
-    <input type="text" id="mensaje_rsa" placeholder="Mensaje a cifrar con clave pública">
-    <button onclick="cifrarRSA()">Cifrar con RSA (Pública)</button>
-    <p id="resultado_rsa"></p>
-    
-    <input type="text" id="cifrado_rsa_input" placeholder="Mensaje cifrado">
-    <button onclick="descifrarRSA()">Descifrar con RSA (Privada)</button>
-    <p id="resultado_desc_rsa"></p>
-    
-    <h2>3. Subir / Descargar Archivos (AES y RSA Híbrido)</h2>
-    <h3>AES (passphrase)</h3>
-    <form id="form_aes" enctype="multipart/form-data" onsubmit="return false;">
-        <input type="file" id="file_aes" name="file"><br>
-        <input type="password" id="passphrase_file_aes" placeholder="Passphrase para AES"><br>
-        <button type="button" onclick="uploadCifrarAES()">Cifrar archivo (AES)</button>
-        <button type="button" onclick="uploadDescifrarAES()">Descifrar archivo (AES)</button>
-        <progress id="progress_file_aes" value="0" max="100" style="width:300px"></progress>
-        <p id="file_aes_status"></p>
-    </form>
+    <h1 class="titulo">AUDITORIA DE SEGURIDAD: IMPLEMENTACION DE CIFRADO</h1>
 
-    <h3>RSA Híbrido (public/private PEM)</h3>
-    <form id="form_rsa" enctype="multipart/form-data" onsubmit="return false;">
-        <input type="file" id="file_rsa" name="file"><br>
-        <textarea id="public_key_input" placeholder="PEM clave pública (para cifrar)" rows="6" cols="60"></textarea><br>
-        <label>O subir archivo de clave pública:</label>
-        <input type="file" id="public_key_file" accept=".pem"><br>
-        <button type="button" onclick="uploadCifrarRSA()">Cifrar archivo (RSA híbrido)</button>
-        <br><br>
-        <textarea id="private_key_input" placeholder="PEM clave privada (para descifrar)" rows="6" cols="60"></textarea><br>
-        <label>O subir archivo de clave privada:</label>
-        <input type="file" id="private_key_file" accept=".pem"><br>
-        <input type="password" id="passphrase_private_rsa" placeholder="Passphrase de la clave privada"><br>
-        <progress id="progress_file_rsa" value="0" max="100" style="width:300px"></progress>
-        <button type="button" onclick="uploadDescifrarRSA()">Descifrar archivo (RSA híbrido)</button>
-        <p id="file_rsa_status"></p>
-    </form>
+    <div class="cards-container">
+        <div class="card1">
+            <h2>1. Cifrado Simétrico (AES)</h2>
+            <input type="password" id="passphrase_aes" placeholder="Passphrase para derivar clave">
+            <input type="text" id="mensaje_aes" placeholder="Mensaje a cifrar">
+            <button onclick="cifrarAES()">Cifrar con AES</button>
+            <p id="resultado_aes"></p>
+
+            <input type="text" id="cifrado_aes_input" placeholder="Mensaje cifrado">
+            <button onclick="descifrarAES()">Descifrar con AES</button>
+            <p id="resultado_desc_aes"></p>
+        </div>
+
+        <div class="card2">
+            <h2>2. Cifrado Asimétrico (RSA)</h2>
+            <input type="password" id="passphrase_rsa" placeholder="Passphrase para proteger clave privada">
+            <button onclick="generarRSA()">Generar Claves RSA</button>
+            <pre id="claves_rsa" class="pre-blanco"></pre>
+
+            <input type="text" id="mensaje_rsa" placeholder="Mensaje a cifrar con clave pública">
+            <button onclick="cifrarRSA()">Cifrar con RSA (Pública)</button>
+            <p id="resultado_rsa"></p>
+
+            <input type="text" id="cifrado_rsa_input" placeholder="Mensaje cifrado">
+            <button onclick="descifrarRSA()">Descifrar con RSA (Privada)</button>
+            <p id="resultado_desc_rsa"></p>
+        </div>
+
+        <div class="card">
+            <h2>3. Archivos (AES y RSA Híbrido)</h2>
+
+            <h3>AES (Passphrase)</h3>
+            <form id="form_aes" enctype="multipart/form-data" onsubmit="return false;">
+                <input type="file" id="file_aes" name="file"><br>
+                <input type="password" id="passphrase_file_aes" placeholder="Passphrase para AES"><br>
+
+                <button type="button" onclick="uploadCifrarAES()">Cifrar archivo (AES)</button>
+                <button type="button" onclick="uploadDescifrarAES()">Descifrar archivo (AES)</button>
+
+                <progress id="progress_file_aes" value="0" max="100"></progress>
+                <p id="file_aes_status"></p>
+            </form>
+
+            <h3>RSA Híbrido (public/private PEM)</h3>
+            <form id="form_rsa" enctype="multipart/form-data" onsubmit="return false;">
+                <input type="file" id="file_rsa"><br>
+                <textarea id="public_key_input" placeholder="PEM clave pública (para cifrar)" rows="6" cols="60"></textarea><br>
+                <label>O subir archivo de clave pública:</label>
+                <input type="file" id="public_key_file" accept=".pem"><br>
+
+                <button type="button" onclick="uploadCifrarRSA()">Cifrar archivo (RSA híbrido)</button>
+                <br><br>
+
+                <textarea id="private_key_input" placeholder="PEM clave privada (para descifrar)" rows="6" cols="60"></textarea><br>
+                <label>O subir archivo de clave privada:</label>
+                <input type="file" id="private_key_file" accept=".pem"><br>
+                <input type="password" id="passphrase_private_rsa" placeholder="Passphrase de la clave privada"><br>
+
+                <progress id="progress_file_rsa" value="0" max="100"></progress>
+                <button type="button" onclick="uploadDescifrarRSA()">Descifrar archivo (RSA híbrido)</button>
+                <p id="file_rsa_status"></p>
+            </form>
+        </div>
+    </div>
 
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
