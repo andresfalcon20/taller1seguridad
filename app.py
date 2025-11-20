@@ -10,6 +10,7 @@ from io import BytesIO
 import struct
 import os
 import base64
+from typing import Optional, Tuple, cast
 
 app = Flask(__name__)
 
@@ -107,7 +108,7 @@ def derivar_semilla_desde_frase(passphrase: str, salt: bytes, iterations: int = 
     )
     return kdf.derive(passphrase.encode())
 
-def generar_claves_desde_frase(passphrase: str, salt: bytes = None):
+def generar_claves_desde_frase(passphrase: str, salt: Optional[bytes] = None) -> Tuple[bytes, str, str]:
     # Si no se pasa salt, generar uno aleatorio y devolverlo para reproducibilidad
     if salt is None:
         salt = os.urandom(16)
@@ -130,6 +131,8 @@ def generar_claves_desde_frase(passphrase: str, salt: bytes = None):
 
 def cifrar_rsa(mensaje: str, public_key_pem: str) -> str:
     public_key = serialization.load_pem_public_key(public_key_pem.encode())
+    # Castear a RSA PublicKey para evitar advertencias de tipo
+    public_key = cast(rsa.RSAPublicKey, public_key)
     cifrado = public_key.encrypt(
         mensaje.encode(),
         padding.OAEP(
@@ -153,6 +156,8 @@ def cifrar_file_hibrido_rsa(file_bytes: bytes, public_key_pem: str) -> bytes:
 
     # Cifrar la clave AES con RSA
     public_key = serialization.load_pem_public_key(public_key_pem.encode())
+    # Castear a RSA PublicKey para la llamada a .encrypt()
+    public_key = cast(rsa.RSAPublicKey, public_key)
     encrypted_key = public_key.encrypt(
         aes_key,
         padding.OAEP(
@@ -178,6 +183,8 @@ def descifrar_file_hibrido_rsa(packed_bytes: bytes, private_key_pem: str, passph
         cifrado = packed_bytes[offset:]
 
         private_key = serialization.load_pem_private_key(private_key_pem.encode(), password=passphrase.encode())
+        # Castear a RSA PrivateKey para la llamada a .decrypt() (evita advertencias de tipo)
+        private_key = cast(rsa.RSAPrivateKey, private_key)
         aes_key = private_key.decrypt(
             encrypted_key,
             padding.OAEP(
@@ -201,6 +208,8 @@ def descifrar_rsa(cifrado_b64: str, private_key_pem: str, passphrase: str) -> st
             private_key_pem.encode(),
             password=passphrase.encode()
         )
+        # Castear a RSA PrivateKey para la llamada a .decrypt()
+        private_key = cast(rsa.RSAPrivateKey, private_key)
         cifrado = base64.b64decode(cifrado_b64)
         descifrado = private_key.decrypt(
             cifrado,
@@ -221,17 +230,21 @@ def index():
 # Rutas para AES
 @app.route('/cifrar_aes', methods=['POST'])
 def cifrar_aes_route():
-    data = request.json
-    passphrase = data['passphrase']
-    mensaje = data['mensaje']
+    data = request.get_json()
+    if not data:
+        return jsonify({'error': 'JSON inválido o faltante'}), 400
+    passphrase = data.get('passphrase')
+    mensaje = data.get('mensaje')
     cifrado = cifrar_aes(mensaje, passphrase)
     return jsonify({'cifrado': cifrado})
 
 @app.route('/descifrar_aes', methods=['POST'])
 def descifrar_aes_route():
-    data = request.json
-    passphrase = data['passphrase']
-    cifrado = data['cifrado']
+    data = request.get_json()
+    if not data:
+        return jsonify({'error': 'JSON inválido o faltante'}), 400
+    passphrase = data.get('passphrase')
+    cifrado = data.get('cifrado')
     descifrado = descifrar_aes(cifrado, passphrase)
     if descifrado.startswith("Error"):
         return jsonify({'error': descifrado})
@@ -240,15 +253,19 @@ def descifrar_aes_route():
 # Rutas para RSA
 @app.route('/generar_rsa', methods=['POST'])
 def generar_rsa():
-    data = request.json
-    passphrase = data['passphrase']
+    data = request.get_json()
+    if not data:
+        return jsonify({'error': 'JSON inválido o faltante'}), 400
+    passphrase = data.get('passphrase')
     private_pem, public_pem = generar_claves_rsa(passphrase)
     return jsonify({'private_key': private_pem, 'public_key': public_pem})
 
 
 @app.route('/generar_desde_frase', methods=['POST'])
 def generar_desde_frase_route():
-    data = request.json
+    data = request.get_json()
+    if not data:
+        return jsonify({'error': 'JSON inválido o faltante'}), 400
     passphrase = data.get('passphrase')
     if not passphrase:
         return jsonify({'error': 'Falta el campo "passphrase"'}), 400
@@ -280,7 +297,7 @@ def upload_cifrar_aes():
     # Devolver como attachment para descargar
     bio = BytesIO(enc)
     bio.seek(0)
-    filename = file.filename + '.enc'
+    filename = (file.filename or 'file') + '.enc'
     return_bytes = bio.read()
     return (return_bytes, 200, {
         'Content-Type': 'application/octet-stream',
@@ -304,7 +321,7 @@ def upload_descifrar_aes():
     bio = BytesIO(dec)
     bio.seek(0)
     # intentar remover sufijo .enc
-    filename = file.filename
+    filename = file.filename or 'file'
     if filename.endswith('.enc'):
         filename = filename[:-4]
     return (bio.read(), 200, {
@@ -329,7 +346,7 @@ def upload_cifrar_rsa():
     packed = cifrar_file_hibrido_rsa(data, public_key)
     bio = BytesIO(packed)
     bio.seek(0)
-    filename = file.filename + '.enc'
+    filename = (file.filename or 'file') + '.enc'
     return (bio.read(), 200, {
         'Content-Type': 'application/octet-stream',
         'Content-Disposition': f'attachment; filename="{filename}"'
@@ -356,7 +373,7 @@ def upload_descifrar_rsa():
         return jsonify({'error': f'Error descifrando: {str(e)}'}), 400
     bio = BytesIO(dec)
     bio.seek(0)
-    filename = file.filename
+    filename = file.filename or 'file'
     if filename.endswith('.enc'):
         filename = filename[:-4]
     return (bio.read(), 200, {
@@ -366,18 +383,22 @@ def upload_descifrar_rsa():
 
 @app.route('/cifrar_rsa', methods=['POST'])
 def cifrar_rsa_route():
-    data = request.json
-    mensaje = data['mensaje']
-    public_key = data['public_key']
+    data = request.get_json()
+    if not data:
+        return jsonify({'error': 'JSON inválido o faltante'}), 400
+    mensaje = data.get('mensaje')
+    public_key = data.get('public_key')
     cifrado = cifrar_rsa(mensaje, public_key)
     return jsonify({'cifrado': cifrado})
 
 @app.route('/descifrar_rsa', methods=['POST'])
 def descifrar_rsa_route():
-    data = request.json
-    cifrado = data['cifrado']
-    private_key = data['private_key']
-    passphrase = data['passphrase']
+    data = request.get_json()
+    if not data:
+        return jsonify({'error': 'JSON inválido o faltante'}), 400
+    cifrado = data.get('cifrado')
+    private_key = data.get('private_key')
+    passphrase = data.get('passphrase')
     descifrado = descifrar_rsa(cifrado, private_key, passphrase)
     if descifrado.startswith("Error"):
         return jsonify({'error': descifrado})
